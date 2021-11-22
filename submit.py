@@ -74,20 +74,20 @@ input_files = list(
     .joinpath(args.delphes_suffix)
     .glob("*.root*")
 )
-intermediate_files = [f"{args.dataset}-{i}.root" for i, _ in enumerate(input_files)]
+output_files = [f"{args.dataset}-{i}.root" for i, _ in enumerate(input_files)]
 
 print(f"{len(input_files)} files found in {args.dataset}.")
 
 process_file = htcondor.Submit()
-process_file["error"] = "condor-process-$(Cluster).err"
-process_file["output"] = "condor-process-$(Cluster).out"
-process_file["log"] = "condor-process-$(Cluster).log"
+process_file["error"] = "condor-$(Cluster)-process.err"
+process_file["output"] = "condor-$(Cluster)-process.out"
+process_file["log"] = "condor-$(Cluster)-process.log"
 process_file["stream_output"] = "True"
 process_file["stream_error"] = "True"
 process_file["executable"] = "process.sh"
-process_file["arguments"] = "$(dataset) $(input_file) $(index)"
+process_file["arguments"] = "$(input_file) $(output_file)"
 process_file["should_transfer_files"] = "YES"
-process_file["transfer_output_files"] = "$(dataset)-$(index).root"
+process_file["transfer_output_files"] = "$(output_file)"
 process_file[" +ProjectName"] = "snowmass21.energy"
 # process_file[
 #    "+SingularityImage"
@@ -102,7 +102,7 @@ merge_files["stream_error"] = "True"
 merge_files["executable"] = "merge.sh"
 merge_files["arguments"] = f"{args.dataset}-skim.root"
 merge_files["should_transfer_files"] = "YES"
-merge_files["transfer_input_files"] = ", ".join(intermediate_files)
+merge_files["transfer_input_files"] = ", ".join(output_files)
 merge_files["transfer_output_files"] = f"{args.dataset}-skim.root"
 merge_files[" +ProjectName"] = "snowmass21.energy"
 
@@ -112,8 +112,8 @@ process_layer = dag.layer(
     name="process",
     submit_description=process_file,
     vars=[
-        {"dataset": args.dataset, "input_file": input_file, "index": index}
-        for index, input_file in enumerate(input_files)
+        {"input_file": input_file, "output_file": output_file}
+        for input_file, output_file in zip(input_files, output_files)
     ],
 )
 
