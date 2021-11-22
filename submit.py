@@ -34,7 +34,7 @@ parser.add_argument(
     "-b",
     "--base-path",
     help="Where to look for the dataset",
-    default="/collab/project/snowmass21/data/smmc/v0.1/r1/",
+    default="/cvmfs/stash.osgstorage.org/osgconnect/collab/project/snowmass21/data/smmc/v0.1/r1/",
 )
 parser.add_argument(
     "-d",
@@ -88,23 +88,14 @@ process_file["executable"] = "process.sh"
 process_file["arguments"] = "$(input_file) $(output_file)"
 process_file["should_transfer_files"] = "YES"
 process_file["transfer_output_files"] = "$(output_file)"
+process_file["requirements"] = "HAS_SINGULARITY == TRUE"
+process_file[
+    "+SingularityImage"
+] = "'/cvmfs/singularity.opensciencegrid.org/scipp-atlas/mario-mapyde/delphes-snowmass:latest'"
+process_file[
+    "environment"
+] = '"DELPHES_PATH=""/usr/local/share/delphes/delphes"" ROOT_INCLUDE_PATH=${ROOT_INCLUDE_PATH}:${DELPHES_PATH}:${DELPHES_PATH}/external"'
 process_file[" +ProjectName"] = "snowmass21.energy"
-# process_file[
-#    "+SingularityImage"
-# ] = "'docker://ghcr.io/scipp-atlas/mario-mapyde/delphes:latest'"
-
-merge_files = htcondor.Submit()
-merge_files["error"] = "condor-$(Cluster)-merge.err"
-merge_files["output"] = "condor-$(Cluster)-merge.out"
-merge_files["log"] = "condor-$(Cluster)-merge.log"
-merge_files["stream_output"] = "True"
-merge_files["stream_error"] = "True"
-merge_files["executable"] = "merge.sh"
-merge_files["arguments"] = f"{args.dataset}-skim.root"
-merge_files["should_transfer_files"] = "YES"
-merge_files["transfer_input_files"] = ", ".join(output_files)
-merge_files["transfer_output_files"] = f"{args.dataset}-skim.root"
-merge_files[" +ProjectName"] = "snowmass21.energy"
 
 dag = htcondor.dags.DAG()
 
@@ -117,8 +108,6 @@ process_layer = dag.layer(
     ],
 )
 
-merge_layer = process_layer.child_layer(name="merge", submit_description=merge_files)
-
 dag_dir = (pathlib.Path.cwd() / f"{args.dataset}-dag").absolute()
 
 # blow away any old files
@@ -129,14 +118,9 @@ dag_file = htcondor.dags.write_dag(dag, dag_dir)
 
 # the submit files are expecting goatbrot to be next to them, so copy it into the dag directory
 shutil.copy2(process_file["Executable"], dag_dir)
-shutil.copy2(merge_files["Executable"], dag_dir)
 
 print(f"DAG directory: {dag_dir}")
 print(f"DAG description file: {dag_file}")
-
-# files = [{"Arguments": f} for f in os.listdir(".") if os.path.isfile(f)]
-# with schedd.transaction() as txn:
-#    sub.queue_with_itemdata(txn, 1, iter(files))
 
 dag_submit = htcondor.Submit.from_dag(str(dag_file), {"force": 1})
 
