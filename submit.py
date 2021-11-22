@@ -86,6 +86,8 @@ process_file["stream_output"] = "True"
 process_file["stream_error"] = "True"
 process_file["executable"] = "process.sh"
 process_file["arguments"] = "$(dataset) $(input_file) $(index)"
+process_file["should_transfer_files"] = "YES"
+process_file["transfer_output_files"] = "$(dataset)-$(index).root"
 process_file[" +ProjectName"] = "snowmass21.energy"
 # process_file[
 #    "+SingularityImage"
@@ -98,8 +100,10 @@ merge_files["log"] = "condor-$(Cluster)-merge.log"
 merge_files["stream_output"] = "True"
 merge_files["stream_error"] = "True"
 merge_files["executable"] = "merge.sh"
-merge_files["arguments"] = f"${args.dataset}-skim.root"
-merge_files["transfer_input_files"] = (", ".join(intermediate_files),)
+merge_files["arguments"] = f"{args.dataset}-skim.root"
+merge_files["should_transfer_files"] = "YES"
+merge_files["transfer_input_files"] = ", ".join(intermediate_files)
+merge_files["transfer_output_files"] = f"{args.dataset}-skim.root"
 merge_files[" +ProjectName"] = "snowmass21.energy"
 
 dag = htcondor.dags.DAG()
