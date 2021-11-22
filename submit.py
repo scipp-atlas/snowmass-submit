@@ -90,7 +90,7 @@ process_file["should_transfer_files"] = "YES"
 process_file["transfer_output_files"] = "$(output_file)"
 process_file["requirements"] = "HAS_SINGULARITY == TRUE"
 process_file[
-    "+SingularityImage"
+    " +SingularityImage"
 ] = "'/cvmfs/singularity.opensciencegrid.org/scipp-atlas/mario-mapyde/delphes-snowmass:latest'"
 process_file[
     "environment"
