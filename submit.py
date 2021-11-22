@@ -76,6 +76,8 @@ input_files = list(
 )
 intermediate_files = [f"{args.dataset}-{i}.root" for i, _ in enumerate(input_files)]
 
+print(f"{len(input_files)} files found in {args.dataset}.")
+
 process_file = htcondor.Submit()
 process_file["error"] = "condor-$(Cluster)-process-$(Process).err"
 process_file["output"] = "condor-$(Cluster)-process-$(Process).out"
