@@ -68,30 +68,48 @@ if args.dataset not in valid_dataset_names:
     )
     sys.exit(1)
 
+input_files = list(
+    pathlib.Path(args.base_path)
+    .joinpath(args.dataset)
+    .joinpath(args.delphes_suffix)
+    .glob("*.root*")
+)
+intermediate_files = [f"{args.dataset}-{i}.root" for i, _ in enumerate(input_files)]
+
 process_file = htcondor.Submit()
-process_file["error"] = "condor-$(Cluster)-$(Process).err"
-process_file["output"] = "condor-$(Cluster)-$(Process).out"
-process_file["Log"] = "condor-$(Cluster)-$(Process).log"
-process_file["Stream_output"] = "True"
-process_file["Stream_error"] = "True"
-process_file["Executable"] = "process_file.sh"
+process_file["error"] = "condor-$(Cluster)-process-$(Process).err"
+process_file["output"] = "condor-$(Cluster)-process-$(Process).out"
+process_file["log"] = "condor-$(Cluster)-process-$(Process).log"
+process_file["stream_output"] = "True"
+process_file["stream_error"] = "True"
+process_file["executable"] = "process.sh"
+process_file["arguments"] = "$(dataset) $(input_file) $(Process)"
 process_file["+ProjectName"] = "'snowmass21.energy'"
 process_file[
     "+SingularityImage"
 ] = "'docker://ghcr.io/scipp-atlas/mario-mapyde/delphes:latest'"
 
 merge_files = htcondor.Submit()
-merge_files["error"] = "condor-$(Cluster)-$(Process).err"
-merge_files["output"] = "condor-$(Cluster)-$(Process).out"
-merge_files["Log"] = "condor-$(Cluster)-$(Process).log"
-merge_files["Stream_output"] = "True"
-merge_files["Stream_error"] = "True"
-merge_files["Executable"] = "merge.sh"
+merge_files["error"] = "condor-$(Cluster)-merge.err"
+merge_files["output"] = "condor-$(Cluster)-merge.out"
+merge_files["log"] = "condor-$(Cluster)-merge.log"
+merge_files["stream_output"] = "True"
+merge_files["stream_error"] = "True"
+merge_files["executable"] = "merge.sh"
+merge_files["arguments"] = f"${args.dataset}-skim.root"
+merge_files["transfer_input_files"] = (", ".join(intermediate_files),)
 merge_files["+ProjectName"] = "'snowmass21.energy'"
 
 dag = htcondor.dags.DAG()
 
-process_layer = dag.layer(name="process", submit_description=process_file, vars=[])
+process_layer = dag.layer(
+    name="process",
+    submit_description=process_file,
+    vars=[
+        {"dataset": args.dataset, "input_file": input_file}
+        for input_file in input_files
+    ],
+)
 
 merge_layer = process_layer.child_layer(name="merge", submit_description=merge_files)
 
