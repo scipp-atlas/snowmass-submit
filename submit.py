@@ -93,7 +93,7 @@ process_file["transfer_output_files"] = "$(output_file)"
 process_file["requirements"] = "HAS_SINGULARITY == TRUE"
 process_file[
     " +SingularityImage"
-] = "'/cvmfs/singularity.opensciencegrid.org/scipp-atlas/mario-mapyde/delphes-snowmass:latest'"
+] = "'/cvmfs/singularity.opensciencegrid.org/scipp-atlas/mario-mapyde/delphes:latest'"
 process_file[
     "environment"
 ] = '"DELPHES_PATH=""/usr/local/share/delphes/delphes"" ROOT_INCLUDE_PATH=${ROOT_INCLUDE_PATH}:${DELPHES_PATH}:${DELPHES_PATH}/external"'
