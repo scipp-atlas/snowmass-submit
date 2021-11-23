@@ -90,6 +90,7 @@ process_file["arguments"] = "$(input_file) $(output_file)"
 process_file["should_transfer_files"] = "YES"
 process_file["transfer_input_files"] = "$(input_file_path)"
 process_file["transfer_output_files"] = "$(output_file)"
+process_file["periodic_release"] = "TRUE"
 process_file["requirements"] = "HAS_SINGULARITY == TRUE"
 process_file[
     " +SingularityImage"
