@@ -34,7 +34,8 @@ parser.add_argument(
     "-b",
     "--base-path",
     help="Where to look for the dataset",
-    default="/cvmfs/stash.osgstorage.org/osgconnect/collab/project/snowmass21/data/smmc/v0.1/r1/",
+    #default="/cvmfs/stash.osgstorage.org/osgconnect/collab/project/snowmass21/data/smmc/v0.1/r1/",
+    default="/collab/project/snowmass21/data/smmc/v0.1/r1/",
 )
 parser.add_argument(
     "-d",
@@ -87,6 +88,7 @@ process_file["stream_error"] = "True"
 process_file["executable"] = "process.sh"
 process_file["arguments"] = "$(input_file) $(output_file)"
 process_file["should_transfer_files"] = "YES"
+process_file["transfer_input_files"] = "$(input_file_path)"
 process_file["transfer_output_files"] = "$(output_file)"
 process_file["requirements"] = "HAS_SINGULARITY == TRUE"
 process_file[
@@ -103,7 +105,7 @@ process_layer = dag.layer(
     name="process",
     submit_description=process_file,
     vars=[
-        {"input_file": input_file, "output_file": output_file}
+        {"input_file": input_file.name, "input_file_path": input_file, "output_file": output_file}
         for input_file, output_file in zip(input_files, output_files)
     ],
 )
