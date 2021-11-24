@@ -1,0 +1,6 @@
+*.txt
+*.root
+*.err
+*.log
+*.out
+*dag*
